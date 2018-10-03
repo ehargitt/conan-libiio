@@ -35,7 +35,7 @@ class LibiioConan(ConanFile):
         pack_names = []
         if tools.os_info.linux_distro == "ubuntu" or tools.os_info.linux_distro == "debian":
             pack_names = ["libcdk5-dev"]
-            self.run('sudo sed -i "s/^deb /deb \[arch=$(dpkg --print-architecture),i386,armhf] /" /etc/apt/sources.list')
+            self.run(r'sudo sed -i "s/^deb /deb \[arch=$(dpkg --print-architecture),i386,armhf] /" /etc/apt/sources.list')
             if self.settings.arch == "x86":
                 pack_names = [item+":i386" for item in pack_names]
             elif self.settings.arch == "x86_64":

@@ -22,7 +22,7 @@ class LibiioConan(ConanFile):
     source_subfolder = "source_subfolder"
     build_subfolder = "build_subfolder"
     requires = (
-        "flex/2.6.4@bincrafters/stable"
+        "flex/2.6.4@bincrafters/stable",
         "bison/3.0.4@bincrafters/stable",
         "libxml2/2.9.8@bincrafters/stable"
     )

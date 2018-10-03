@@ -5,57 +5,57 @@ from conans import ConanFile, CMake, tools
 import os
 
 
-class LibnameConan(ConanFile):
-    name = "libname"
-    version = "0.0.0"
-    description = "Keep it short"
+class LibiioConan(ConanFile):
+    name = "libiio"
+    version = "0.15"
+    description = "libiio is used to interface to the Linux Industrial Input/Output (IIO) Subsystem"
     url = "https://github.com/bincrafters/conan-libname"
-    homepage = "https://github.com/original_author/original_lib"
-    author = "Bincrafters <bincrafters@gmail.com>"
-    # Indicates License type of the packaged library
-    license = "MIT"
-
-    # Packages the license for the conanfile.py
+    homepage = "https://github.com/analogdevicesinc/libiio"
+    author = "Eric Hargitt <eric.hargitt@gmail.com>"
+    license = "LGPL"
     exports = ["LICENSE.md"]
-
-    # Remove following lines if the target lib does not use cmake.
     exports_sources = ["CMakeLists.txt"]
     generators = "cmake"
-
-    # Options may need to change depending on the packaged library.
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False], "fPIC": [True, False]}
     default_options = "shared=False", "fPIC=True"
-
-    # Custom attributes for Bincrafters recipe conventions
     source_subfolder = "source_subfolder"
     build_subfolder = "build_subfolder"
-
-    # Use version ranges for dependencies unless there's a reason not to
-    # Update 2/9/18 - Per conan team, ranges are slow to resolve.
-    # So, with libs like zlib, updates are very rare, so we now use static version
-
-
     requires = (
-        "OpenSSL/[>=1.0.2l]@conan/stable",
-        "zlib/1.2.11@conan/stable"
+        "flex/2.6.4@bincrafters/stable"
+        "bison/3.0.4@bincrafters/stable",
+        "libxml2/2.9.8@bincrafters/stable"
     )
 
     def config_options(self):
         if self.settings.os == 'Windows':
             del self.options.fPIC
 
+    def build_requirements(self):
+        pack_names = []
+        if tools.os_info.linux_distro == "ubuntu" or tools.os_info.linux_distro == "debian":
+            pack_names = ["libcdk5-dev"]
+            self.run('sudo sed -i "s/^deb /deb \[arch=$(dpkg --print-architecture),i386,armhf] /" /etc/apt/sources.list')
+            if self.settings.arch == "x86":
+                pack_names = [item+":i386" for item in pack_names]
+            elif self.settings.arch == "x86_64":
+                pack_names = [item+":amd64" for item in pack_names]
+            elif self.settings.arch == "armv7hf":
+                self.run('dpkg --add-architecture armhf')
+                pack_names = [item+":armhf" for item in pack_names]
+
+        if pack_names:
+            installer = tools.SystemPackageTool()
+            installer.install(" ".join(pack_names)) # Install the package
+
     def source(self):
-        source_url = "https://github.com/libauthor/libname"
+        source_url = "https://github.com/analogdevicesinc/libiio"
         tools.get("{0}/archive/v{1}.tar.gz".format(source_url, self.version))
         extracted_dir = self.name + "-" + self.version
-
-        #Rename to "source_subfolder" is a convention to simplify later steps
         os.rename(extracted_dir, self.source_subfolder)
 
     def configure_cmake(self):
         cmake = CMake(self)
-        cmake.definitions["BUILD_TESTS"] = False # example
         if self.settings.os != 'Windows':
             cmake.definitions['CMAKE_POSITION_INDEPENDENT_CODE'] = self.options.fPIC
         cmake.configure(build_folder=self.build_subfolder)
@@ -66,7 +66,7 @@ class LibnameConan(ConanFile):
         cmake.build()
 
     def package(self):
-        self.copy(pattern="LICENSE", dst="licenses", src=self.source_subfolder)
+        self.copy(pattern="LICENSE.md", dst="licenses", src=self.source_subfolder)
         cmake = self.configure_cmake()
         cmake.install()
         # If the CMakeLists.txt has a proper install method, the steps below may be redundant

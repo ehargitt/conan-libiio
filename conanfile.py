@@ -43,9 +43,9 @@ class LibiioConan(ConanFile):
             arch = ubuntu_arch_dict[self.settings.arch]
             pack_names = [item+':'+arch for item in pack_names]
             if not arch in ["amd64", "i386"]:
-                self.run('sudo sed -i "s/^deb /deb \[arch=$(dpkg --print-architecture),i386] /" /etc/apt/sources.list')
+                self.run(r'sudo sed -i "s/^deb /deb \[arch=$(dpkg --print-architecture),i386] /" /etc/apt/sources.list')
                 for url, repo in [("archive", ""), ("archive", "-updates"), ("security", "-security")]:
-                    self.run('sudo echo \
+                    self.run(r'sudo echo \
                     "deb [arch={0}] http://{1}.ubuntu.com/ubuntu/ $(lsb_release -sc){2} main restricted universe multiverse" \
                     >> /etc/apt/sources.list'.format(arch, url, repo))
                 self.run('dpkg --add-architecture {}'.format(arch))

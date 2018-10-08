@@ -4,6 +4,11 @@
 from conans import ConanFile, CMake, tools
 import os
 
+ubuntu_arch_dict = {
+    "x86_64": "amd64",
+    "x86": "i386",
+    "armv7hf": "armhf"
+}
 
 class LibiioConan(ConanFile):
     name = "libiio"
@@ -33,16 +38,17 @@ class LibiioConan(ConanFile):
 
     def build_requirements(self):
         pack_names = []
-        if tools.os_info.linux_distro == "ubuntu" or tools.os_info.linux_distro == "debian":
+        if tools.os_info.linux_distro == "ubuntu":
             pack_names = ["libcdk5-dev"]
-            self.run(r'sudo sed -i "s/^deb /deb \[arch=$(dpkg --print-architecture),i386,armhf] /" /etc/apt/sources.list')
-            if self.settings.arch == "x86":
-                pack_names = [item+":i386" for item in pack_names]
-            elif self.settings.arch == "x86_64":
-                pack_names = [item+":amd64" for item in pack_names]
-            elif self.settings.arch == "armv7hf":
-                self.run('dpkg --add-architecture armhf')
-                pack_names = [item+":armhf" for item in pack_names]
+            arch = ubuntu_arch_dict[self.settings.arch]
+            pack_names = [item+':'+arch for item in pack_names]
+            if not arch in ["amd64", "i386"]:
+                self.run('sudo sed -i "s/^deb /deb \[arch=$(dpkg --print-architecture),i386] /" /etc/apt/sources.list')
+                for url, repo in [("archive", ""), ("archive", "-updates"), ("security", "-security")]:
+                    self.run('sudo echo \
+                    "deb [arch={0}] http://{1}.ubuntu.com/ubuntu/ $(lsb_release -sc){2} main restricted universe multiverse" \
+                    >> /etc/apt/sources.list'.format(arch, url, repo))
+                self.run('dpkg --add-architecture {}'.format(arch))
 
         if pack_names:
             installer = tools.SystemPackageTool()

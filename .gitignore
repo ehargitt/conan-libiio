@@ -45,3 +45,4 @@ tmp/
 
 # Test Harness
 Dockerfile_x86_64
+Dockerfile_armv7hf
